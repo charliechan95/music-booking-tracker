@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Venues — Music Booking Tracker{% endblock %}
+{% block content %}
+<h1>Venues &amp; contacts</h1>
+
+<div class="toolbar">
+  <form method="get" class="search">
+    <input type="text" name="q" placeholder="Search venues…"
+           value="{{ search }}">
+    <button type="submit">Search</button>
+  </form>
+  <button id="btn-new-venue" class="primary">+ New venue</button>
+</div>
+
+<table class="tbl">
+  <thead><tr>
+    <th>Name</th><th>Contact</th><th>Location</th><th>Type</th><th></th>
+  </tr></thead>
+  <tbody>
+  {% for v in venues %}
+    <tr>
+      <td><strong>{{ v.name }}</strong>
+        {% if v.source %}<div class="muted">via {{ v.source }}</div>{% endif %}</td>
+      <td>{{ v.contact_name or "—" }}
+        {% if v.email %}<div class="muted">{{ v.email }}</div>{% endif %}
+        {% if v.phone %}<div class="muted">{{ v.phone }}</div>{% endif %}</td>
+      <td>{{ v.city or "" }}{% if v.city and v.country %}, {% endif %}{{ v.country or "" }}</td>
+      <td>{{ v.venue_type or "—" }}</td>
+      <td><button data-new-booking-for="{{ v.id }}">+ Booking</button></td>
+    </tr>
+  {% else %}
+    <tr><td colspan="5" class="muted">No venues yet. Add your first one.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+
+<dialog id="dlg-venue">
+  <form method="dialog" id="frm-venue">
+    <h2>New venue</h2>
+    <label>Name <input name="name" required
+           placeholder="e.g. Esplanade Concert Hall"></label>
+    <label>Contact name <input name="contact_name"></label>
+    <label>Email <input type="email" name="email"></label>
+    <label>Phone <input name="phone"></label>
+    <label>City <input name="city"></label>
+    <label>Country <input name="country"></label>
+    <label>Venue type <input name="venue_type"
+           placeholder="Concert hall / Festival / Wedding / Corporate"></label>
+    <label>Source <input name="source"
+           placeholder="Referral / Cold outreach / Agent…"></label>
+    <label>Notes <textarea name="notes" rows="3"></textarea></label>
+    <div class="dlg-actions">
+      <button type="submit" class="primary">Save</button>
+      <button type="button" id="btn-cancel-venue">Cancel</button>
+    </div>
+  </form>
+</dialog>
+{% endblock %}

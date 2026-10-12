@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}Music Booking Tracker{% endblock %}</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">🎵 Booking Tracker</div>
+  <nav>
+    <a href="{{ url_for('dashboard') }}"
+       class="{% if request.path == '/' %}active{% endif %}">Dashboard</a>
+    <a href="{{ url_for('pipeline') }}"
+       class="{% if request.path.startswith('/pipeline') %}active{% endif %}">Pipeline</a>
+    <a href="{{ url_for('venues_page') }}"
+       class="{% if request.path.startswith('/venues') %}active{% endif %}">Venues</a>
+  </nav>
+</header>
+<main class="container">
+  {% block content %}{% endblock %}
+</main>
+{% if stages %}
+{# Shared booking dialog: used by the pipeline page and the venues-page
+   "+ Booking" shortcut. Kept here so it exists wherever app.js needs it. #}
+<dialog id="dlg-booking">
+  <form method="dialog" id="frm-booking">
+    <h2>New booking</h2>
+    <label>Venue
+      <select name="venue_id" id="f-venue" required></select>
+    </label>
+    <label>Title <input name="title" required
+           placeholder="e.g. Diwali Gala Night"></label>
+    <label>Event date <input type="date" name="event_date"></label>
+    <label>Stage
+      <select name="stage">
+        {% for s, label in stages %}
+        <option value="{{ s }}">{{ label }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Fee <input type="number" step="0.01" name="fee"></label>
+    <label>Currency <input name="currency" value="USD" maxlength="3"></label>
+    <label>Follow-up date <input type="date" name="follow_up_date"></label>
+    <label>Notes <textarea name="notes" rows="3"></textarea></label>
+    <div class="dlg-actions">
+      <button type="submit" class="primary">Save</button>
+      <button type="button" id="btn-cancel-booking">Cancel</button>
+    </div>
+  </form>
+</dialog>
+{% endif %}
+<script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>

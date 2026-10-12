@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Pipeline — Music Booking Tracker{% endblock %}
+{% block content %}
+<h1>Booking pipeline</h1>
+
+<div class="toolbar">
+  <form method="get" class="search">
+    <input type="text" name="q" placeholder="Search bookings…"
+           value="{{ search }}">
+    <button type="submit">Search</button>
+  </form>
+  <button id="btn-new-booking" class="primary">+ New booking</button>
+</div>
+
+<div class="board">
+  {% for col in columns %}
+  <div class="column" data-stage="{{ col.stage }}">
+    <h3>{{ col.label }}
+      <span class="count">{{ col.bookings|length }}</span></h3>
+    {% for b in col.bookings %}
+    <div class="booking-card" data-id="{{ b.id }}">
+      <strong>{{ b.title }}</strong>
+      <div class="muted">{{ b.venue_name }}
+        {% if b.venue_city %}· {{ b.venue_city }}{% endif %}
+        {% if b.venue_country %}· {{ b.venue_country }}{% endif %}</div>
+      {% if b.event_date %}<div>📅 {{ b.event_date }}</div>{% endif %}
+      {% if b.fee %}<div>💰 {{ b.fee }} {{ b.currency }}</div>{% endif %}
+      {% if b.follow_up_date %}
+        <div class="followup">⏰ Follow up: {{ b.follow_up_date }}</div>
+      {% endif %}
+      <div class="card-actions">
+        <select data-stage-select data-id="{{ b.id }}">
+          {% for s, label in stages %}
+          <option value="{{ s }}"
+                  {% if s == b.stage %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+    {% else %}
+    <div class="muted empty">No bookings</div>
+    {% endfor %}
+  </div>
+  {% endfor %}
+</div>
+
+{% endblock %}

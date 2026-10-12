@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Music Booking Tracker</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  .tabs { display: flex; gap: 0.4rem; }
+  .tabs button {
+    border: 1px solid transparent; background: transparent; color: #d8d2c4;
+  }
+  .tabs button.active { background: #3a322a; color: #fff; }
+  .view { display: none; }
+  .view.active { display: block; }
+  .export-row { margin-top: 1.5rem; }
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">🎵 Booking Tracker</div>
+  <nav class="tabs">
+    <button data-tab="dashboard" class="active">Dashboard</button>
+    <button data-tab="pipeline">Pipeline</button>
+    <button data-tab="venues">Venues</button>
+  </nav>
+</header>
+<main class="container">
+
+  <!-- Dashboard -->
+  <section id="view-dashboard" class="view active">
+    <h1>Dashboard</h1>
+    <section class="cards" id="stage-cards"></section>
+    <section id="overdue-section" style="display:none">
+      <h2>⚠️ Overdue follow-ups</h2>
+      <table class="tbl">
+        <thead><tr>
+          <th>Booking</th><th>Venue</th><th>Follow-up was</th><th></th>
+        </tr></thead>
+        <tbody id="overdue-body"></tbody>
+      </table>
+    </section>
+    <section>
+      <h2>Recent bookings</h2>
+      <table class="tbl">
+        <thead><tr>
+          <th>Title</th><th>Venue</th><th>Event date</th><th>Stage</th>
+        </tr></thead>
+        <tbody id="recent-body"></tbody>
+      </table>
+    </section>
+    <div class="export-row">
+      <button id="btn-export">⬇ Export data (JSON)</button>
+      <span class="muted">Backup your data — same device only.</span>
+    </div>
+  </section>
+
+  <!-- Pipeline -->
+  <section id="view-pipeline" class="view">
+    <h1>Booking pipeline</h1>
+    <div class="toolbar">
+      <div class="search">
+        <input type="text" id="pipeline-q" placeholder="Search bookings…">
+        <button id="pipeline-search">Search</button>
+      </div>
+      <button id="btn-new-booking" class="primary">+ New booking</button>
+    </div>
+    <div class="board" id="board"></div>
+  </section>
+
+  <!-- Venues -->
+  <section id="view-venues" class="view">
+    <h1>Venues &amp; contacts</h1>
+    <div class="toolbar">
+      <div class="search">
+        <input type="text" id="venues-q" placeholder="Search venues…">
+        <button id="venues-search">Search</button>
+      </div>
+      <button id="btn-new-venue" class="primary">+ New venue</button>
+    </div>
+    <table class="tbl">
+      <thead><tr>
+        <th>Name</th><th>Contact</th><th>Location</th><th>Type</th><th></th>
+      </tr></thead>
+      <tbody id="venues-body"></tbody>
+    </table>
+  </section>
+
+</main>
+
+<dialog id="dlg-venue">
+  <form method="dialog" id="frm-venue">
+    <h2>New venue</h2>
+    <label>Name <input name="name" required
+           placeholder="e.g. Esplanade Concert Hall"></label>
+    <label>Contact name <input name="contact_name"></label>
+    <label>Email <input type="email" name="email"></label>
+    <label>Phone <input name="phone"></label>
+    <label>City <input name="city"></label>
+    <label>Country <input name="country"></label>
+    <label>Venue type <input name="venue_type"
+           placeholder="Concert hall / Festival / Wedding / Corporate"></label>
+    <label>Source <input name="source"
+           placeholder="Referral / Cold outreach / Agent…"></label>
+    <label>Notes <textarea name="notes" rows="3"></textarea></label>
+    <div class="dlg-actions">
+      <button type="submit" class="primary">Save</button>
+      <button type="button" id="btn-cancel-venue">Cancel</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="dlg-booking">
+  <form method="dialog" id="frm-booking">
+    <h2>New booking</h2>
+    <label>Venue
+      <select name="venue_id" id="f-venue" required></select>
+    </label>
+    <label>Title <input name="title" required
+           placeholder="e.g. Diwali Gala Night"></label>
+    <label>Event date <input type="date" name="event_date"></label>
+    <label>Stage <select name="stage" id="f-stage"></select></label>
+    <label>Fee <input type="number" step="0.01" name="fee"></label>
+    <label>Currency <input name="currency" value="USD" maxlength="3"></label>
+    <label>Follow-up date <input type="date" name="follow_up_date"></label>
+    <label>Notes <textarea name="notes" rows="3"></textarea></label>
+    <div class="dlg-actions">
+      <button type="submit" class="primary">Save</button>
+      <button type="button" id="btn-cancel-booking">Cancel</button>
+    </div>
+  </form>
+</dialog>
+
+<script src="db.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

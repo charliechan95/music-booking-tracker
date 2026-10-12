@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — Music Booking Tracker{% endblock %}
+{% block content %}
+<h1>Dashboard</h1>
+
+<section class="cards">
+  {% for stage, label in stages %}
+  <a class="card" href="{{ url_for('pipeline') }}">
+    <div class="card-num">{{ counts[stage] }}</div>
+    <div class="card-label">{{ label }}</div>
+  </a>
+  {% endfor %}
+</section>
+
+{% if overdue %}
+<section>
+  <h2>⚠️ Overdue follow-ups</h2>
+  <table class="tbl">
+    <thead><tr>
+      <th>Booking</th><th>Venue</th><th>Follow-up was</th><th></th>
+    </tr></thead>
+    <tbody>
+    {% for b in overdue %}
+      <tr class="overdue">
+        <td>{{ b.title }}</td>
+        <td>{{ b.venue_name }}</td>
+        <td>{{ b.follow_up_date }}</td>
+        <td><button data-move data-id="{{ b.id }}"
+                    data-stage="contacted">Mark contacted</button></td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endif %}
+
+<section>
+  <h2>Recent bookings</h2>
+  <table class="tbl">
+    <thead><tr>
+      <th>Title</th><th>Venue</th><th>Event date</th><th>Stage</th>
+    </tr></thead>
+    <tbody>
+    {% for b in recent %}
+      <tr>
+        <td>{{ b.title }}</td>
+        <td>{{ b.venue_name }}{% if b.venue_city %} — {{ b.venue_city }}{% endif %}</td>
+        <td>{{ b.event_date or "—" }}</td>
+        <td><span class="pill">{{ b.stage.replace('_', ' ').title() }}</span></td>
+      </tr>
+    {% else %}
+      <tr><td colspan="4" class="muted">No bookings yet.
+        Add your first venue, then a booking.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}
