@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Music Booking Tracker</title>
+<title data-i18n="title">Music Booking Tracker</title>
 <link rel="stylesheet" href="style.css">
 <style>
   .tabs { display: flex; gap: 0.4rem; }
@@ -14,73 +14,82 @@
   .view { display: none; }
   .view.active { display: block; }
   .export-row { margin-top: 1.5rem; }
+  .lang-switch { display: flex; gap: 0.3rem; margin-left: 0.8rem; }
+  .lang-switch button { border: 1px solid #6b5138; background: transparent;
+    color: #d8d2c4; border-radius: 6px; padding: 0.3rem 0.6rem; cursor: pointer; }
+  .lang-switch button.active { background: #3a322a; color: #fff;
+    border-color: transparent; }
 </style>
 </head>
 <body>
 <header class="topbar">
-  <div class="brand">🎵 Booking Tracker</div>
+  <div class="brand" data-i18n="brand">🎵 Booking Tracker</div>
   <nav class="tabs">
-    <button data-tab="dashboard" class="active">Dashboard</button>
-    <button data-tab="pipeline">Pipeline</button>
-    <button data-tab="venues">Venues</button>
+    <button data-tab="dashboard" class="active" data-i18n="tab_dashboard">Dashboard</button>
+    <button data-tab="pipeline" data-i18n="tab_pipeline">Pipeline</button>
+    <button data-tab="venues" data-i18n="tab_venues">Venues</button>
   </nav>
+  <div class="lang-switch">
+    <button type="button" data-lang-btn="zh">繁中</button>
+    <button type="button" data-lang-btn="en">EN</button>
+  </div>
 </header>
 <main class="container">
 
   <!-- Dashboard -->
   <section id="view-dashboard" class="view active">
-    <h1>Dashboard</h1>
+    <h1 data-i18n="dash_title">Dashboard</h1>
     <section class="cards" id="stage-cards"></section>
     <section id="overdue-section" style="display:none">
-      <h2>⚠️ Overdue follow-ups</h2>
+      <h2 data-i18n="dash_overdue_title">⚠️ Overdue follow-ups</h2>
       <table class="tbl">
         <thead><tr>
-          <th>Booking</th><th>Venue</th><th>Follow-up was</th><th></th>
+          <th data-i18n="th_booking">Booking</th><th data-i18n="th_venue">Venue</th><th data-i18n="th_followup_was">Follow-up was</th><th></th>
         </tr></thead>
         <tbody id="overdue-body"></tbody>
       </table>
     </section>
     <section>
-      <h2>Recent bookings</h2>
+      <h2 data-i18n="dash_recent_title">Recent bookings</h2>
       <table class="tbl">
         <thead><tr>
-          <th>Title</th><th>Venue</th><th>Event date</th><th>Stage</th>
+          <th data-i18n="th_title">Title</th><th data-i18n="th_venue">Venue</th><th data-i18n="th_event_date">Event date</th><th data-i18n="th_stage">Stage</th>
         </tr></thead>
         <tbody id="recent-body"></tbody>
       </table>
     </section>
     <div class="export-row">
-      <button id="btn-export">⬇ Export data (JSON)</button>
-      <span class="muted">Backup your data — same device only.</span>
+      <button id="btn-export" data-i18n="btn_export">⬇ Export data (JSON)</button>
+      <span class="muted" data-i18n="export_note">Backup your data — same device only.</span>
     </div>
   </section>
 
   <!-- Pipeline -->
   <section id="view-pipeline" class="view">
-    <h1>Booking pipeline</h1>
+    <h1 data-i18n="pipeline_title">Booking pipeline</h1>
     <div class="toolbar">
       <div class="search">
-        <input type="text" id="pipeline-q" placeholder="Search bookings…">
-        <button id="pipeline-search">Search</button>
+        <input type="text" id="pipeline-q" data-i18n-ph="ph_search_bookings" placeholder="Search bookings…">
+        <button id="pipeline-search" data-i18n="btn_search">Search</button>
       </div>
-      <button id="btn-new-booking" class="primary">+ New booking</button>
+      <button id="btn-new-booking" class="primary" data-i18n="btn_new_booking">+ New booking</button>
     </div>
     <div class="board" id="board"></div>
   </section>
 
   <!-- Venues -->
   <section id="view-venues" class="view">
-    <h1>Venues &amp; contacts</h1>
+    <h1 data-i18n="venues_title">Venues &amp; contacts</h1>
     <div class="toolbar">
       <div class="search">
-        <input type="text" id="venues-q" placeholder="Search venues…">
-        <button id="venues-search">Search</button>
+        <input type="text" id="venues-q" data-i18n-ph="ph_search_venues" placeholder="Search venues…">
+        <button id="venues-search" data-i18n="btn_search">Search</button>
       </div>
-      <button id="btn-new-venue" class="primary">+ New venue</button>
+      <button id="btn-new-venue" class="primary" data-i18n="btn_new_venue">+ New venue</button>
     </div>
     <table class="tbl">
       <thead><tr>
-        <th>Name</th><th>Contact</th><th>Location</th><th>Type</th><th></th>
+        <th data-i18n="th_name">Name</th><th data-i18n="th_contact">Contact</th><th data-i18n="th_location">Location</th><th data-i18n="th_type">Type</th><th></th>
       </tr></thead>
       <tbody id="venues-body"></tbody>
     </table>
@@ -90,48 +99,49 @@
 
 <dialog id="dlg-venue">
   <form method="dialog" id="frm-venue">
-    <h2>New venue</h2>
-    <label>Name <input name="name" required
-           placeholder="e.g. Esplanade Concert Hall"></label>
-    <label>Contact name <input name="contact_name"></label>
-    <label>Email <input type="email" name="email"></label>
-    <label>Phone <input name="phone"></label>
-    <label>City <input name="city"></label>
-    <label>Country <input name="country"></label>
-    <label>Venue type <input name="venue_type"
-           placeholder="Concert hall / Festival / Wedding / Corporate"></label>
-    <label>Source <input name="source"
-           placeholder="Referral / Cold outreach / Agent…"></label>
-    <label>Notes <textarea name="notes" rows="3"></textarea></label>
+    <h2 data-i18n="dlg_venue_new">New venue</h2>
+    <label><span data-i18n="lbl_venue_name">Name</span> <input name="name" required
+           data-i18n-ph="ph_venue_name" placeholder="e.g. Esplanade Concert Hall"></label>
+    <label><span data-i18n="lbl_contact_name">Contact name</span> <input name="contact_name"></label>
+    <label><span data-i18n="lbl_email">Email</span> <input type="email" name="email"></label>
+    <label><span data-i18n="lbl_phone">Phone</span> <input name="phone"></label>
+    <label><span data-i18n="lbl_city">City</span> <input name="city"></label>
+    <label><span data-i18n="lbl_country">Country</span> <input name="country"></label>
+    <label><span data-i18n="lbl_venue_type">Venue type</span> <input name="venue_type"
+           data-i18n-ph="ph_venue_type" placeholder="Concert hall / Festival / Wedding / Corporate"></label>
+    <label><span data-i18n="lbl_source">Source</span> <input name="source"
+           data-i18n-ph="ph_venue_source" placeholder="Referral / Cold outreach / Agent…"></label>
+    <label><span data-i18n="lbl_notes">Notes</span> <textarea name="notes" rows="3"></textarea></label>
     <div class="dlg-actions">
-      <button type="submit" class="primary">Save</button>
-      <button type="button" id="btn-cancel-venue">Cancel</button>
+      <button type="submit" class="primary" data-i18n="btn_save">Save</button>
+      <button type="button" id="btn-cancel-venue" data-i18n="btn_cancel">Cancel</button>
     </div>
   </form>
 </dialog>
 
 <dialog id="dlg-booking">
   <form method="dialog" id="frm-booking">
-    <h2>New booking</h2>
-    <label>Venue
+    <h2 data-i18n="dlg_booking_new">New booking</h2>
+    <label><span data-i18n="lbl_venue">Venue</span>
       <select name="venue_id" id="f-venue" required></select>
     </label>
-    <label>Title <input name="title" required
-           placeholder="e.g. Diwali Gala Night"></label>
-    <label>Event date <input type="date" name="event_date"></label>
-    <label>Stage <select name="stage" id="f-stage"></select></label>
-    <label>Fee <input type="number" step="0.01" name="fee"></label>
-    <label>Currency <input name="currency" value="USD" maxlength="3"></label>
-    <label>Follow-up date <input type="date" name="follow_up_date"></label>
-    <label>Notes <textarea name="notes" rows="3"></textarea></label>
+    <label><span data-i18n="lbl_booking_title">Title</span> <input name="title" required
+           data-i18n-ph="ph_booking_title" placeholder="e.g. Diwali Gala Night"></label>
+    <label><span data-i18n="lbl_event_date">Event date</span> <input type="date" name="event_date"></label>
+    <label><span data-i18n="lbl_stage">Stage</span> <select name="stage" id="f-stage"></select></label>
+    <label><span data-i18n="lbl_fee">Fee</span> <input type="number" step="0.01" name="fee"></label>
+    <label><span data-i18n="lbl_currency">Currency</span> <input name="currency" value="USD" maxlength="3"></label>
+    <label><span data-i18n="lbl_followup_date">Follow-up date</span> <input type="date" name="follow_up_date"></label>
+    <label><span data-i18n="lbl_notes">Notes</span> <textarea name="notes" rows="3"></textarea></label>
     <div class="dlg-actions">
-      <button type="submit" class="primary">Save</button>
-      <button type="button" id="btn-cancel-booking">Cancel</button>
+      <button type="submit" class="primary" data-i18n="btn_save">Save</button>
+      <button type="button" id="btn-cancel-booking" data-i18n="btn_cancel">Cancel</button>
     </div>
   </form>
 </dialog>
 
 <script src="db.js"></script>
+<script src="i18n.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
