@@ -106,7 +106,7 @@ const DB = {
       event_date: data.event_date || null,
       stage: data.stage || "new_lead",
       fee: data.fee ? parseFloat(data.fee) : null,
-      currency: data.currency || "USD",
+      currency: data.currency || "HKD",
       follow_up_date: data.follow_up_date || null,
       notes: data.notes || null,
       created_at: ts,
