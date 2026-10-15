@@ -7,8 +7,17 @@ function esc(s) {
     .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
 
+const STAGE_LABEL_KEY = {
+  "new_lead": "stage_new_lead", "contacted": "stage_contacted",
+  "negotiating": "stage_negotiating", "confirmed": "stage_confirmed",
+  "completed": "stage_completed", "cancelled": "stage_cancelled",
+};
+function stageLabel(s) {
+  const k = STAGE_LABEL_KEY[s];
+  return k ? t(k) : (s || "");
+}
 function stagePill(stage) {
-  return `<span class="pill">${esc(STAGE_LABELS[stage] || stage)}</span>`;
+  return `<span class="pill">${esc(stageLabel(stage))}</span>`;
 }
 
 function venueLabel(v) {
@@ -32,10 +41,10 @@ document.querySelectorAll("[data-tab]").forEach((btn) => {
 function renderDashboard() {
   const counts = DB.stageCounts();
   document.getElementById("stage-cards").innerHTML = STAGES.map(
-    ([s, label]) => `
+    ([s]) => `
     <a class="card" href="#" data-goto="pipeline">
       <div class="card-num">${counts[s]}</div>
-      <div class="card-label">${esc(label)}</div>
+      <div class="card-label">${esc(stageLabel(s))}</div>
     </a>`
   ).join("");
 
@@ -49,7 +58,7 @@ function renderDashboard() {
       <td>${esc(v ? v.name : "—")}</td>
       <td>${esc(b.follow_up_date)}</td>
       <td><button data-move data-id="${b.id}"
-                  data-stage="contacted">Mark contacted</button></td>
+                  data-stage="contacted">${t("btn_mark_contacted")}</button></td>
     </tr>`;
   }).join("");
 
@@ -64,8 +73,7 @@ function renderDashboard() {
           <td>${stagePill(b.stage)}</td>
         </tr>`;
       }).join("")
-    : `<tr><td colspan="4" class="muted">No bookings yet.
-       Add your first venue, then a booking.</td></tr>`;
+    : `<tr><td colspan="4" class="muted">${t("no_bookings_hint")}</td></tr>`;
 
   document.querySelectorAll('[data-goto]').forEach((a) => {
     a.addEventListener("click", (e) => {
@@ -80,12 +88,12 @@ let pipelineQuery = "";
 
 function renderPipeline() {
   const board = document.getElementById("board");
-  board.innerHTML = STAGES.map(([stage, label]) => {
+  board.innerHTML = STAGES.map(([stage]) => {
     const bookings = DB.bookings(stage, pipelineQuery || null);
     const cards = bookings.map((b) => {
       const v = DB.venue(b.venue_id) || {};
-      const opts = STAGES.map(([s, l]) =>
-        `<option value="${s}"${s === b.stage ? " selected" : ""}>${esc(l)}</option>`
+      const opts = STAGES.map(([s]) =>
+        `<option value="${s}"${s === b.stage ? " selected" : ""}>${esc(stageLabel(s))}</option>`
       ).join("");
       return `<div class="booking-card">
         <strong>${esc(b.title)}</strong>
@@ -95,15 +103,15 @@ function renderPipeline() {
         ${b.event_date ? `<div>📅 ${esc(b.event_date)}</div>` : ""}
         ${b.fee ? `<div>💰 ${esc(b.fee)} ${esc(b.currency)}</div>` : ""}
         ${b.follow_up_date
-          ? `<div class="followup">⏰ Follow up: ${esc(b.follow_up_date)}</div>` : ""}
+          ? `<div class="followup">⏰ ${esc(t("lbl_followup"))}: ${esc(b.follow_up_date)}</div>` : ""}
         <div class="card-actions">
           <select data-stage-select data-id="${b.id}">${opts}</select>
         </div>
       </div>`;
     }).join("");
     return `<div class="column">
-      <h3>${esc(label)} <span class="count">${bookings.length}</span></h3>
-      ${cards || '<div class="muted empty">No bookings</div>'}
+      <h3>${esc(stageLabel(stage))} <span class="count">${bookings.length}</span></h3>
+      ${cards || '<div class="muted empty">' + t("no_bookings") + "</div>"}
     </div>`;
   }).join("");
 
@@ -136,15 +144,15 @@ function renderVenues() {
     ? list.map((v) => `
       <tr>
         <td><strong>${esc(v.name)}</strong>
-          ${v.source ? `<div class="muted">via ${esc(v.source)}</div>` : ""}</td>
+          ${v.source ? `<div class="muted">${t("via")} ${esc(v.source)}</div>` : ""}</td>
         <td>${esc(v.contact_name || "—")}
           ${v.email ? `<div class="muted">${esc(v.email)}</div>` : ""}
           ${v.phone ? `<div class="muted">${esc(v.phone)}</div>` : ""}</td>
         <td>${esc([v.city, v.country].filter(Boolean).join(", "))}</td>
         <td>${esc(v.venue_type || "—")}</td>
-        <td><button data-new-booking-for="${v.id}">+ Booking</button></td>
+        <td><button data-new-booking-for="${v.id}">${t("btn_new_booking_for")}</button></td>
       </tr>`).join("")
-    : `<tr><td colspan="5" class="muted">No venues yet. Add your first one.</td></tr>`;
+    : `<tr><td colspan="5" class="muted">${t("no_venues_hint")}</td></tr>`;
 
   document.querySelectorAll("[data-new-booking-for]").forEach((btn) => {
     btn.addEventListener("click", () =>
@@ -187,8 +195,12 @@ document.getElementById("frm-venue").addEventListener("submit", (e) => {
 const dlgBooking = document.getElementById("dlg-booking");
 const selVenue = document.getElementById("f-venue");
 const selStage = document.getElementById("f-stage");
-selStage.innerHTML = STAGES.map(([s, l]) =>
-  `<option value="${s}">${esc(l)}</option>`).join("");
+function buildStageOptions() {
+  selStage.innerHTML = STAGES.map(([s]) =>
+    `<option value="${s}">${esc(stageLabel(s))}</option>`).join("");
+}
+buildStageOptions();
+window.onLangChange = buildStageOptions;
 
 function openBookingDialog(preselectId) {
   const venues = DB.venues();
@@ -201,7 +213,7 @@ function openBookingDialog(preselectId) {
 
 document.getElementById("btn-new-booking").addEventListener("click", () => {
   if (!DB.venues().length) {
-    alert("Add a venue first, then create a booking.");
+    alert(t("alert_venue_first"));
     document.querySelector('[data-tab="venues"]').click();
     return;
   }
@@ -244,3 +256,4 @@ function renderAll() {
   renderVenues();
 }
 renderAll();
+applyI18n();
