@@ -21,13 +21,20 @@ const DB = {
       return fallback;
     }
   },
+  // Guarded write: returns true on success, false when storage is full or
+  // unavailable (e.g. quota). Callers surface the failure to the user.
   _write(key, value) {
-    localStorage.setItem(key, JSON.stringify(value));
+    try {
+      localStorage.setItem(key, JSON.stringify(value));
+      return true;
+    } catch {
+      return false;
+    }
   },
   _nextId(kind) {
     const key = "mbt_seq_" + kind;
     const n = (parseInt(localStorage.getItem(key) || "0", 10) || 0) + 1;
-    localStorage.setItem(key, String(n));
+    try { localStorage.setItem(key, String(n)); } catch { /* seq gap only */ }
     return n;
   },
   nowIso() {
@@ -69,8 +76,32 @@ const DB = {
       created_at: this.nowIso(),
     };
     list.push(venue);
-    this._write("mbt_venues", list);
-    return venue.id;
+    return this._write("mbt_venues", list) ? venue.id : null;
+  },
+  updateVenue(id, data) {
+    const list = this._read("mbt_venues", []);
+    const v = list.find((x) => String(x.id) === String(id));
+    if (!v) return false;
+    for (const k of ["name", "contact_name", "email", "phone",
+                     "country", "city", "venue_type", "source", "notes"]) {
+      if (data[k] !== undefined) v[k] = data[k] || (k === "name" ? "" : null);
+    }
+    return this._write("mbt_venues", list);
+  },
+  // How many bookings point at this venue. Deleting a venue is blocked while
+  // bookings reference it — never silently orphan or cascade-delete bookings.
+  venueBookingCount(id) {
+    return this._read("mbt_bookings", []).filter(
+      (b) => String(b.venue_id) === String(id)
+    ).length;
+  },
+  deleteVenue(id) {
+    if (this.venueBookingCount(id) > 0) return false;
+    const list = this._read("mbt_venues", []);
+    const i = list.findIndex((x) => String(x.id) === String(id));
+    if (i < 0) return false;
+    list.splice(i, 1);
+    return this._write("mbt_venues", list);
   },
 
   // ---- Bookings ----------------------------------------------------------
@@ -113,8 +144,31 @@ const DB = {
       updated_at: ts,
     };
     list.push(booking);
-    this._write("mbt_bookings", list);
-    return booking.id;
+    return this._write("mbt_bookings", list) ? booking.id : null;
+  },
+  updateBooking(id, data) {
+    const list = this._read("mbt_bookings", []);
+    const b = list.find((x) => String(x.id) === String(id));
+    if (!b) return false;
+    if (data.title !== undefined) b.title = data.title || "";
+    if (data.venue_id != null && data.venue_id !== "")
+      b.venue_id = parseInt(data.venue_id, 10);
+    if (data.event_date !== undefined) b.event_date = data.event_date || null;
+    if (data.stage && STAGE_LABELS[data.stage]) b.stage = data.stage;
+    if (data.fee !== undefined) b.fee = data.fee ? parseFloat(data.fee) : null;
+    if (data.currency !== undefined) b.currency = data.currency || "HKD";
+    if (data.follow_up_date !== undefined)
+      b.follow_up_date = data.follow_up_date || null;
+    if (data.notes !== undefined) b.notes = data.notes || null;
+    b.updated_at = this.nowIso();
+    return this._write("mbt_bookings", list);
+  },
+  deleteBooking(id) {
+    const list = this._read("mbt_bookings", []);
+    const i = list.findIndex((x) => String(x.id) === String(id));
+    if (i < 0) return false;
+    list.splice(i, 1);
+    return this._write("mbt_bookings", list);
   },
   moveBooking(id, stage) {
     if (!STAGE_LABELS[stage]) return false;
@@ -123,8 +177,7 @@ const DB = {
     if (!b) return false;
     b.stage = stage;
     b.updated_at = this.nowIso();
-    this._write("mbt_bookings", list);
-    return true;
+    return this._write("mbt_bookings", list);
   },
 
   // ---- Dashboard ----------------------------------------------------------
@@ -154,5 +207,47 @@ const DB = {
       bookings: this._read("mbt_bookings", []),
       exported_at: this.nowIso(),
     };
+  },
+  // Shape-check a backup object BEFORE anything is written.
+  // Reject: wrong container, missing/bad lists, rows missing id+name/title,
+  // bad stage, bookings pointing at unknown venues, duplicate ids.
+  validateImport(obj) {
+    if (!obj || typeof obj !== "object" || Array.isArray(obj)) return false;
+    if (!Array.isArray(obj.venues) || !Array.isArray(obj.bookings)) return false;
+    const ids = new Set();
+    for (const v of obj.venues) {
+      if (!v || v.id == null || typeof v.name !== "string") return false;
+      if (ids.has("v" + v.id)) return false;
+      ids.add("v" + v.id);
+    }
+    for (const b of obj.bookings) {
+      if (!b || b.id == null || typeof b.title !== "string") return false;
+      if (b.stage && !STAGE_LABELS[b.stage]) return false;
+      if (!obj.venues.some((v) => String(v.id) === String(b.venue_id)))
+        return false;
+      if (ids.has("b" + b.id)) return false;
+      ids.add("b" + b.id);
+    }
+    return true;
+  },
+  // Full restore from a validated backup: REPLACES all data. Validates first
+  // so corrupt data is never merged in; rolls back on write failure.
+  importAll(obj) {
+    if (!this.validateImport(obj)) return false;
+    const prevVenues = this._read("mbt_venues", []);
+    const prevBookings = this._read("mbt_bookings", []);
+    if (!this._write("mbt_venues", obj.venues)) return false;
+    if (!this._write("mbt_bookings", obj.bookings)) {
+      this._write("mbt_venues", prevVenues);
+      return false;
+    }
+    // Keep id sequences ahead of imported ids so new rows don't collide.
+    const maxId = (rows) =>
+      rows.reduce((m, r) => Math.max(m, parseInt(r.id, 10) || 0), 0);
+    try {
+      localStorage.setItem("mbt_seq_venue", String(maxId(obj.venues)));
+      localStorage.setItem("mbt_seq_booking", String(maxId(obj.bookings)));
+    } catch { /* seq persist best-effort; ids still unique via _nextId */ }
+    return true;
   },
 };

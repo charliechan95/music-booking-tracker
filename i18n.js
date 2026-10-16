@@ -37,6 +37,7 @@ const I18N = {
     ph_venue_source: "Referral / Cold outreach / Agent…",
     ph_booking_title: "e.g. Diwali Gala Night",
     btn_save: "Save", btn_cancel: "Cancel",
+    btn_edit: "Edit", btn_delete: "Delete",
     btn_mark_contacted: "Mark contacted",
     no_bookings_hint: "No bookings yet. Add your first venue, then a booking.",
     no_bookings: "No bookings",
@@ -44,6 +45,19 @@ const I18N = {
     lbl_followup: "Follow up",
     btn_new_booking_for: "+ Booking",
     alert_venue_first: "Add a venue first, then create a booking.",
+    dlg_venue_edit: "Edit venue", dlg_booking_edit: "Edit booking",
+    confirm_delete_venue: "Delete this venue? This cannot be undone.",
+    confirm_delete_booking: "Delete this booking? This cannot be undone.",
+    alert_venue_has_bookings:
+      "Cannot delete this venue — it still has bookings. Delete those bookings first.",
+    alert_save_failed:
+      "Could not save — storage is full or unavailable. Your data was not changed.",
+    btn_import: "⬆ Import data (JSON)",
+    confirm_import:
+      "Import will REPLACE all current venues and bookings with the backup file. Continue?",
+    alert_import_ok: "Import complete — data restored.",
+    alert_import_bad:
+      "Import failed — the file is not a valid booking-tracker backup. Nothing was changed.",
     via: "via",
     stage_new_lead: "New Lead", stage_contacted: "Contacted",
     stage_negotiating: "Negotiating", stage_confirmed: "Confirmed",
@@ -82,6 +96,7 @@ const I18N = {
     ph_venue_source: "介紹／主動聯絡／經紀…",
     ph_booking_title: "例如：排燈節晚宴演出",
     btn_save: "儲存", btn_cancel: "取消",
+    btn_edit: "編輯", btn_delete: "刪除",
     btn_mark_contacted: "標為已聯絡",
     no_bookings_hint: "尚無預約。請先新增第一個場地，再新增預約。",
     no_bookings: "尚無預約",
@@ -89,6 +104,19 @@ const I18N = {
     lbl_followup: "跟進",
     btn_new_booking_for: "+ 預約",
     alert_venue_first: "請先新增一個場地，再建立預約。",
+    dlg_venue_edit: "編輯場地", dlg_booking_edit: "編輯預約",
+    confirm_delete_venue: "刪除此場地？此動作無法復原。",
+    confirm_delete_booking: "刪除此預約？此動作無法復原。",
+    alert_venue_has_bookings:
+      "無法刪除此場地 — 它仍有預約存在。請先刪除那些預約。",
+    alert_save_failed:
+      "無法儲存 — 儲存空間已滿或無法使用。你的資料沒有被更改。",
+    btn_import: "⬆ 匯入資料（JSON）",
+    confirm_import:
+      "匯入將以備份檔案取代目前所有場地及預約。繼續？",
+    alert_import_ok: "匯入完成 — 資料已還原。",
+    alert_import_bad:
+      "匯入失敗 — 此檔案不是有效的預約追蹤備份。沒有任何資料被更改。",
     via: "來自",
     stage_new_lead: "新潛在客戶", stage_contacted: "已聯絡",
     stage_negotiating: "議價中", stage_confirmed: "已確認",

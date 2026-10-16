@@ -60,6 +60,8 @@
     </section>
     <div class="export-row">
       <button id="btn-export" data-i18n="btn_export">⬇ Export data (JSON)</button>
+      <button id="btn-import" data-i18n="btn_import">⬆ Import data (JSON)</button>
+      <input type="file" id="file-import" accept="application/json,.json" hidden>
       <span class="muted" data-i18n="export_note">Backup your data — same device only.</span>
     </div>
   </section>
@@ -99,7 +101,7 @@
 
 <dialog id="dlg-venue">
   <form method="dialog" id="frm-venue">
-    <h2 data-i18n="dlg_venue_new">New venue</h2>
+    <h2 id="dlg-venue-title">New venue</h2>
     <label><span data-i18n="lbl_venue_name">Name</span> <input name="name" required
            data-i18n-ph="ph_venue_name" placeholder="e.g. Esplanade Concert Hall"></label>
     <label><span data-i18n="lbl_contact_name">Contact name</span> <input name="contact_name"></label>
@@ -121,7 +123,7 @@
 
 <dialog id="dlg-booking">
   <form method="dialog" id="frm-booking">
-    <h2 data-i18n="dlg_booking_new">New booking</h2>
+    <h2 id="dlg-booking-title">New booking</h2>
     <label><span data-i18n="lbl_venue">Venue</span>
       <select name="venue_id" id="f-venue" required></select>
     </label>

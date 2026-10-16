@@ -106,6 +106,8 @@ function renderPipeline() {
           ? `<div class="followup">⏰ ${esc(t("lbl_followup"))}: ${esc(b.follow_up_date)}</div>` : ""}
         <div class="card-actions">
           <select data-stage-select data-id="${b.id}">${opts}</select>
+          <button data-edit-booking="${b.id}">${t("btn_edit")}</button>
+          <button data-del-booking="${b.id}">${t("btn_delete")}</button>
         </div>
       </div>`;
     }).join("");
@@ -117,7 +119,8 @@ function renderPipeline() {
 
   board.querySelectorAll("[data-stage-select]").forEach((sel) => {
     sel.addEventListener("change", () => {
-      DB.moveBooking(sel.dataset.id, sel.value);
+      if (!DB.moveBooking(sel.dataset.id, sel.value))
+        alert(t("alert_save_failed"));
       renderAll();
     });
   });
@@ -150,7 +153,11 @@ function renderVenues() {
           ${v.phone ? `<div class="muted">${esc(v.phone)}</div>` : ""}</td>
         <td>${esc([v.city, v.country].filter(Boolean).join(", "))}</td>
         <td>${esc(v.venue_type || "—")}</td>
-        <td><button data-new-booking-for="${v.id}">${t("btn_new_booking_for")}</button></td>
+        <td class="row-actions">
+          <button data-new-booking-for="${v.id}">${t("btn_new_booking_for")}</button>
+          <button data-edit-venue="${v.id}">${t("btn_edit")}</button>
+          <button data-del-venue="${v.id}">${t("btn_delete")}</button>
+        </td>
       </tr>`).join("")
     : `<tr><td colspan="5" class="muted">${t("no_venues_hint")}</td></tr>`;
 
@@ -180,34 +187,84 @@ function formToObj(form) {
 }
 
 const dlgVenue = document.getElementById("dlg-venue");
+const dlgVenueTitle = document.getElementById("dlg-venue-title");
+let editingVenueId = null;
+// venueId null = new venue; otherwise prefilled edit.
+function openVenueDialog(venueId) {
+  editingVenueId = venueId || null;
+  const form = document.getElementById("frm-venue");
+  form.reset();
+  const v = editingVenueId ? DB.venue(editingVenueId) : null;
+  dlgVenueTitle.textContent = t(v ? "dlg_venue_edit" : "dlg_venue_new");
+  if (v) {
+    for (const k of ["name", "contact_name", "email", "phone",
+                     "city", "country", "venue_type", "source", "notes"]) {
+      form.elements[k].value = v[k] == null ? "" : v[k];
+    }
+  }
+  dlgVenue.showModal();
+}
 document.getElementById("btn-new-venue").addEventListener("click", () =>
-  dlgVenue.showModal());
+  openVenueDialog());
 document.getElementById("btn-cancel-venue").addEventListener("click", () =>
   dlgVenue.close());
 document.getElementById("frm-venue").addEventListener("submit", (e) => {
   e.preventDefault();
-  DB.createVenue(formToObj(e.target));
+  const data = formToObj(e.target);
+  const ok = editingVenueId
+    ? DB.updateVenue(editingVenueId, data)
+    : DB.createVenue(data) != null;
+  if (!ok) { alert(t("alert_save_failed")); return; }  // keep dialog open, form data intact
+  editingVenueId = null;
   e.target.reset();
   dlgVenue.close();
   renderAll();
 });
 
 const dlgBooking = document.getElementById("dlg-booking");
+const dlgBookingTitle = document.getElementById("dlg-booking-title");
 const selVenue = document.getElementById("f-venue");
 const selStage = document.getElementById("f-stage");
+let editingBookingId = null;
 function buildStageOptions() {
   selStage.innerHTML = STAGES.map(([s]) =>
     `<option value="${s}">${esc(stageLabel(s))}</option>`).join("");
 }
 buildStageOptions();
-window.onLangChange = buildStageOptions;
+function refreshOpenDialogTitles() {
+  if (dlgVenue.open)
+    dlgVenueTitle.textContent = t(editingVenueId ? "dlg_venue_edit" : "dlg_venue_new");
+  if (dlgBooking.open)
+    dlgBookingTitle.textContent = t(editingBookingId ? "dlg_booking_edit" : "dlg_booking_new");
+}
+window.onLangChange = () => {
+  buildStageOptions();
+  refreshOpenDialogTitles();
+};
 
-function openBookingDialog(preselectId) {
+// bookingId null = new booking (preselectId preselects the venue);
+// otherwise the booking dialog opens prefilled for editing.
+function openBookingDialog(preselectId, bookingId) {
+  editingBookingId = bookingId || null;
+  const b = editingBookingId ? DB.booking(editingBookingId) : null;
   const venues = DB.venues();
   selVenue.innerHTML = venues.map((v) =>
-    `<option value="${v.id}"${String(v.id) === String(preselectId)
+    `<option value="${v.id}"${String(v.id) === String(b ? b.venue_id : preselectId)
       ? " selected" : ""}>${esc(v.name)}${v.city ? " — " + esc(v.city) : ""}</option>`
   ).join("");
+  dlgBookingTitle.textContent = t(b ? "dlg_booking_edit" : "dlg_booking_new");
+  const form = document.getElementById("frm-booking");
+  form.reset();  // restores the HKD default on the currency input
+  if (b) {
+    form.elements["venue_id"].value = b.venue_id;
+    form.elements.title.value = b.title || "";
+    form.elements["event_date"].value = b.event_date || "";
+    form.elements.stage.value = b.stage;
+    form.elements.fee.value = b.fee == null ? "" : b.fee;
+    form.elements.currency.value = b.currency || "HKD";
+    form.elements["follow_up_date"].value = b.follow_up_date || "";
+    form.elements.notes.value = b.notes || "";
+  }
   dlgBooking.showModal();
 }
 
@@ -223,7 +280,12 @@ document.getElementById("btn-cancel-booking").addEventListener("click", () =>
   dlgBooking.close());
 document.getElementById("frm-booking").addEventListener("submit", (e) => {
   e.preventDefault();
-  DB.createBooking(formToObj(e.target));
+  const data = formToObj(e.target);
+  const ok = editingBookingId
+    ? DB.updateBooking(editingBookingId, data)
+    : DB.createBooking(data) != null;
+  if (!ok) { alert(t("alert_save_failed")); return; }  // keep dialog open, form data intact
+  editingBookingId = null;
   e.target.reset();
   dlgBooking.close();
   renderAll();
@@ -233,7 +295,31 @@ document.getElementById("frm-booking").addEventListener("submit", (e) => {
 document.addEventListener("click", (e) => {
   const btn = e.target.closest("[data-move]");
   if (btn) {
-    DB.moveBooking(btn.dataset.id, btn.dataset.stage);
+    if (!DB.moveBooking(btn.dataset.id, btn.dataset.stage))
+      alert(t("alert_save_failed"));
+    renderAll();
+    return;
+  }
+  const edV = e.target.closest("[data-edit-venue]");
+  if (edV) { openVenueDialog(edV.dataset.editVenue); return; }
+  const delV = e.target.closest("[data-del-venue]");
+  if (delV) {
+    const id = delV.dataset.delVenue;
+    if (DB.venueBookingCount(id) > 0) {
+      alert(t("alert_venue_has_bookings"));  // blocked: bookings still point here
+      return;
+    }
+    if (!confirm(t("confirm_delete_venue"))) return;
+    if (!DB.deleteVenue(id)) alert(t("alert_save_failed"));
+    renderAll();
+    return;
+  }
+  const edB = e.target.closest("[data-edit-booking]");
+  if (edB) { openBookingDialog(null, edB.dataset.editBooking); return; }
+  const delB = e.target.closest("[data-del-booking]");
+  if (delB) {
+    if (!confirm(t("confirm_delete_booking"))) return;
+    if (!DB.deleteBooking(delB.dataset.delBooking)) alert(t("alert_save_failed"));
     renderAll();
   }
 });
@@ -247,6 +333,27 @@ document.getElementById("btn-export").addEventListener("click", () => {
   a.download = "booking-tracker-backup.json";
   a.click();
   URL.revokeObjectURL(a.href);
+});
+
+/* ---- Import / restore -------------------------------------------------------- */
+document.getElementById("btn-import").addEventListener("click", () =>
+  document.getElementById("file-import").click());
+document.getElementById("file-import").addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  e.target.value = "";  // allow picking the same file again
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    let obj = null;
+    try { obj = JSON.parse(reader.result); } catch { obj = null; }
+    if (!DB.validateImport(obj)) { alert(t("alert_import_bad")); return; }
+    if (!confirm(t("confirm_import"))) return;  // replace is destructive
+    if (!DB.importAll(obj)) { alert(t("alert_save_failed")); return; }
+    alert(t("alert_import_ok"));
+    renderAll();
+  };
+  reader.onerror = () => alert(t("alert_import_bad"));
+  reader.readAsText(file);
 });
 
 /* ---- Boot -------------------------------------------------------------------- */
